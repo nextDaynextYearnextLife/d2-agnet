@@ -15,18 +15,22 @@ hero_data = response.json()
 for hero in hero_data:
     hero_id = hero['id']
     hero_name = hero['localized_name']
-    image_url = hero.get('img')
+    # Build image URL from hero name (OpenDota format)
+    name = hero['name'].replace('npc_dota_hero_', '')
+    image_url = f"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/{name}_lg.png"
     
-    if image_url:
-        try:
-            img_response = requests.get(image_url)
+    try:
+        img_response = requests.get(image_url, timeout=10)
+        if img_response.status_code == 200:
             img = Image.open(BytesIO(img_response.content))
             
             # Save image
-            img_path = f'visualization/hero_images/{hero_id}_{hero_name}.png'
+            img_path = f'visualization/hero_images/{hero_id}_{name}.png'
             img.save(img_path)
             print(f"Downloaded: {img_path}")
-        except Exception as e:
-            print(f"Failed to download {hero_name}: {e}")
+        else:
+            print(f"Failed to download {hero_name}: HTTP {img_response.status_code}")
+    except Exception as e:
+        print(f"Failed to download {hero_name}: {e}")
 
 print("Hero images download completed.")

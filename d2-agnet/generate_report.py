@@ -55,17 +55,20 @@ for _, row in feature_importance_df.iterrows():
 
 # Generate hero cards
 hero_cards = ""
-for hero in hero_data:
+for hero in hero_data[:20]:  # Show first 20 heroes with images
     hero_id = str(hero['id'])
-    image_url = hero.get('img', '')
-    if not image_url:
-        continue
-    win_rate = df[df[hero_id+'_radiant'].eq(1)]['radiant_win_rate'].mean()
+    name = hero['name'].replace('npc_dota_hero_', '')
+    local_img_path = f"hero_images/{hero_id}_{name}.png"
+    if os.path.exists(f'visualization/{local_img_path}'):
+        image_src = local_img_path
+    else:
+        image_src = f"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/{name}_lg.png"
+    hero_name = hero['localized_name']
+    # Note: Hero-specific win rate not available in current dataset
     hero_cards += f"""
         <div class="hero-card">
-            <img src="https://api.opendota.com{image_url}" alt="{hero['displayname']}" />
-            <p>{hero['displayname']}</p>
-            <p>Win Rate: {win_rate:.2%}</p>
+            <img src="{image_src}" alt="{hero_name}" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/{name}_lg.png'" />
+            <p>{hero_name}</p>
         </div>
     """
 

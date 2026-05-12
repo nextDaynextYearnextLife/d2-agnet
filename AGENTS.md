@@ -29,14 +29,23 @@ d2-agnet/
 
 ## 运行方式
 ```bash
-python build_model.py    # 训练模型
-python generate_report.py  # 生成报告
+python download_hero_images.py  # 下载英雄图片（需要网络）
+python build_model.py           # 训练模型
+python generate_report.py       # 生成可视化报告
+```
+
+## 依赖安装
+```bash
+pip install scikit-learn pandas requests Pillow
 ```
 
 ## 用户偏好与长期约束
 - 项目为纯离线数据处理，无需网络服务
 - 模型使用 class_weight='balanced' 处理类别不平衡
+- 英雄图片优先使用本地缓存，CDN 为备用源
 
 ## 常见问题和预防
 - 确保 processed_matches.csv 存在再运行 build_model.py
 - 模型精度受限于数据集规模和特征质量
+- 英雄胜率统计需要按具体英雄分组的列，当前数据不可用
+- 图片下载依赖 OpenDota/Steam CDN，确保网络可达
