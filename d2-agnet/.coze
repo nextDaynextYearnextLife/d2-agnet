@@ -1,0 +1,8 @@
+[project]
+sub_id = "a508051a"
+name = "d2-agnet"
+requires = ["python-3.12"]
+project_type = "backend"
+
+[preview]
+preview_enable = "disabled"
