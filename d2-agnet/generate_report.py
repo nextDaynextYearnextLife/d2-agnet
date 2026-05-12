@@ -1,41 +1,61 @@
 import pandas as pd
 import requests
 import os
-from sklearn.ensemble import RandomForestClassifier
 import joblib
 
 # Load processed data and model
 df = pd.read_csv('processed_matches.csv')
 model = joblib.load('random_forest_model.pkl')
 
-# Get feature importances
-importances = model.feature_importances_
-features = df.columns[2:]  # Exclude match_id and radiant_win
-feature_importance_df = pd.DataFrame({'Feature': features, 'Importance': importances})
-feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False).head(10)
+# Load hero statistics
+hero_stats = pd.read_csv('hero_statistics.csv')
+
+# Fetch hero data
+hero_url = "https://api.opendota.com/api/heroes"
+hero_response = requests.get(hero_url)
+hero_data = {h['id']: h for h in hero_response.json()}
 
 # Calculate stats
 total_matches = len(df)
 radiant_win_rate = df['radiant_win'].mean()
 
-# Fetch hero images
-hero_url = "https://api.opendota.com/api/heroes"
-hero_response = requests.get(hero_url)
-hero_data = hero_response.json()
+# Get feature importances
+importances = model.feature_importances_
+feature_names = df.drop(columns=['radiant_win']).columns
+importance_df = pd.DataFrame({
+    'feature': feature_names,
+    'importance': importances
+}).sort_values('importance', ascending=False)
+
+# Hero features analysis
+hero_cols = [c for c in feature_names if c.startswith('hero_')]
+hero_importance = importance_df[importance_df['feature'].isin(hero_cols)]
+
+# Add hero names to importance
+def hero_id_from_col(col):
+    return int(col.replace('hero_', '').replace('_radiant', ''))
+
+hero_importance['hero_id'] = hero_importance['feature'].apply(hero_id_from_col)
+hero_importance['hero_name'] = hero_importance['hero_id'].map(lambda x: hero_data.get(x, {}).get('localized_name', f'Hero {x}'))
+
+# Add win rate to hero importance
+hero_stats_dict = hero_stats.set_index('hero_id').to_dict()
+hero_importance['pick_count'] = hero_importance['hero_id'].map(hero_stats_dict.get('picks', {}))
+hero_importance['win_rate'] = hero_importance['hero_id'].map(hero_stats_dict.get('win_rate', {}))
 
 # Create visualization directory
 os.makedirs('visualization', exist_ok=True)
 
 # Generate feature bars HTML
 feature_bars = ""
-for _, row in feature_importance_df.iterrows():
-    feature_name = row['Feature'].replace('_', ' ').title()
-    importance = row['Importance'] * 100  # Convert to percentage
+for _, row in importance_df.head(12).iterrows():
+    feature_name = row['feature'].replace('_', ' ').title()
+    importance = row['importance'] * 100
     feature_bars += f"""
         <div class="feature-item">
             <div class="feature-label">
                 <span class="feature-name">{feature_name}</span>
-                <span class="feature-value">{row['Importance']:.2%}</span>
+                <span class="feature-value">{row['importance']:.3f}</span>
             </div>
             <div class="feature-bar-bg">
                 <div class="feature-bar" style="width: {importance:.1f}%"></div>
@@ -43,31 +63,63 @@ for _, row in feature_importance_df.iterrows():
         </div>
     """
 
-# Generate hero cards
-hero_cards = ""
-for hero in hero_data[:24]:  # Show 24 heroes in grid
-    hero_id = str(hero['id'])
-    name = hero['name'].replace('npc_dota_hero_', '')
-    local_img_path = f"hero_images/{hero_id}_{name}.png"
-    if os.path.exists(f'visualization/{local_img_path}'):
-        image_src = local_img_path
+# Generate top/bottom hero cards
+def create_hero_card(hero_id, hero_name, win_rate, picks, importance, hero_data):
+    name = hero_data.get('name', '').replace('npc_dota_hero_', '')
+    local_img = f"hero_images/{hero_id}_{name}.png"
+    if os.path.exists(f'visualization/{local_img}'):
+        img_src = local_img
     else:
-        image_src = f"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/{name}_lg.png"
-    hero_name = hero['localized_name']
-    # Get hero attributes for color coding
-    primary_attr = hero.get('primary_attr', '')
-    attr_color = {'agi': '#4CAF50', 'str': '#F44336', 'int': '#2196F3'}.get(primary_attr, '#9C27B0')
-    attr_icon = {'agi': 'A', 'str': 'S', 'int': 'I'}.get(primary_attr, '?')
+        img_src = f"https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/{name}_lg.png"
     
-    hero_cards += f"""
+    attr = hero_data.get('primary_attr', '')
+    attr_colors = {'agi': '#4CAF50', 'str': '#F44336', 'int': '#2196F3'}
+    attr_color = attr_colors.get(attr, '#9C27B0')
+    
+    return f"""
         <div class="hero-card">
             <div class="hero-image-wrapper">
-                <img src="{image_src}" alt="{hero_name}" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/{name}_lg.png'" />
-                <span class="attr-badge" style="background: {attr_color}">{attr_icon}</span>
+                <img src="{img_src}" alt="{hero_name}" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/{name}_lg.png'" />
             </div>
-            <span class="hero-name">{hero_name}</span>
+            <div class="hero-info">
+                <span class="hero-name">{hero_name}</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: {'#4CAF50' if win_rate >= 0.5 else '#F44336'}">{win_rate:.1%}</span>
+                    <span class="stat picks">{picks} picks</span>
+                </div>
+            </div>
         </div>
     """
+
+# Top 10 win rate heroes
+top_heroes_html = ""
+top_heroes = hero_importance[hero_importance['pick_count'] >= 10].nlargest(10, 'win_rate')
+for _, row in top_heroes.iterrows():
+    top_heroes_html += create_hero_card(
+        row['hero_id'], row['hero_name'], row['win_rate'], 
+        int(row['pick_count']), row['importance'], 
+        hero_data.get(row['hero_id'], {})
+    )
+
+# Bottom 10 win rate heroes
+bottom_heroes_html = ""
+bottom_heroes = hero_importance[hero_importance['pick_count'] >= 10].nsmallest(10, 'win_rate')
+for _, row in bottom_heroes.iterrows():
+    bottom_heroes_html += create_hero_card(
+        row['hero_id'], row['hero_name'], row['win_rate'], 
+        int(row['pick_count']), row['importance'],
+        hero_data.get(row['hero_id'], {})
+    )
+
+# Most influential heroes
+influential_html = ""
+influential = hero_importance.nlargest(10, 'importance')
+for _, row in influential.iterrows():
+    influential_html += create_hero_card(
+        row['hero_id'], row['hero_name'], row['win_rate'] if pd.notna(row['win_rate']) else 0.5, 
+        int(row['pick_count']) if pd.notna(row['pick_count']) else 0, row['importance'],
+        hero_data.get(row['hero_id'], {})
+    )
 
 # Full HTML template
 html_content = f"""<!DOCTYPE html>
@@ -75,7 +127,7 @@ html_content = f"""<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dota 2 Match Analysis Report</title>
+    <title>Dota 2 Hero Win Rate Analysis</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * {{
@@ -93,7 +145,7 @@ html_content = f"""<!DOCTYPE html>
         }}
         
         .container {{
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }}
         
@@ -135,12 +187,11 @@ html_content = f"""<!DOCTYPE html>
             padding: 25px;
             text-align: center;
             backdrop-filter: blur(10px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease;
         }}
         
         .stat-card:hover {{
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border-color: rgba(255, 215, 0, 0.3);
         }}
         
@@ -188,25 +239,50 @@ html_content = f"""<!DOCTYPE html>
             border-radius: 2px;
         }}
         
+        .section-title .badge {{
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-left: auto;
+        }}
+        
+        .badge-good {{
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }}
+        
+        .badge-bad {{
+            background: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }}
+        
+        .badge-neutral {{
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }}
+        
         /* Feature Bars */
         .features-list {{
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 12px;
         }}
         
         .feature-item {{
             background: rgba(0, 0, 0, 0.2);
-            padding: 15px 20px;
-            border-radius: 10px;
+            padding: 12px 18px;
+            border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }}
         
         .feature-label {{
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
         }}
         
         .feature-name {{
@@ -219,34 +295,32 @@ html_content = f"""<!DOCTYPE html>
         }}
         
         .feature-bar-bg {{
-            height: 8px;
+            height: 6px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
         }}
         
         .feature-bar {{
             height: 100%;
             background: linear-gradient(90deg, #ff8c00, #ffd700);
-            border-radius: 4px;
-            transition: width 1s ease;
+            border-radius: 3px;
         }}
         
         /* Hero Grid */
         .hero-grid {{
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
         }}
         
         .hero-card {{
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             transition: all 0.3s ease;
-            cursor: pointer;
         }}
         
         .hero-card:hover {{
@@ -256,10 +330,9 @@ html_content = f"""<!DOCTYPE html>
         }}
         
         .hero-image-wrapper {{
-            position: relative;
             width: 80px;
             height: 45px;
-            margin: 0 auto 10px;
+            margin: 0 auto 8px;
         }}
         
         .hero-image-wrapper img {{
@@ -269,26 +342,51 @@ html_content = f"""<!DOCTYPE html>
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }}
         
-        .attr-badge {{
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #fff;
-            border: 2px solid #1a1a2e;
+        .hero-info {{
+            min-height: 50px;
         }}
         
         .hero-name {{
-            font-size: 0.85rem;
+            display: block;
+            font-size: 0.8rem;
             color: #ddd;
             font-weight: 500;
+            margin-bottom: 4px;
+        }}
+        
+        .hero-stats {{
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.75rem;
+        }}
+        
+        .hero-stats .win-rate {{
+            font-weight: 600;
+        }}
+        
+        .hero-stats .picks {{
+            color: #888;
+        }}
+        
+        /* Insight Box */
+        .insight-box {{
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }}
+        
+        .insight-box h4 {{
+            color: #ffd700;
+            margin-bottom: 10px;
+        }}
+        
+        .insight-box p {{
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 0.95rem;
         }}
         
         /* Footer */
@@ -305,11 +403,7 @@ html_content = f"""<!DOCTYPE html>
                 font-size: 1.8rem;
             }}
             .hero-grid {{
-                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-                gap: 12px;
-            }}
-            .section {{
-                padding: 20px;
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }}
         }}
     </style>
@@ -318,14 +412,14 @@ html_content = f"""<!DOCTYPE html>
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>Dota 2 Match Analysis</h1>
-            <p class="subtitle">Machine Learning Win Rate Prediction Report</p>
+            <h1>Dota 2 Hero Win Rate Analysis</h1>
+            <p class="subtitle">Machine Learning Model: Random Forest Classifier</p>
         </div>
         
         <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-value">{total_matches}</div>
+                <div class="stat-value">{total_matches:,}</div>
                 <div class="stat-label">Total Matches</div>
             </div>
             <div class="stat-card">
@@ -338,29 +432,69 @@ html_content = f"""<!DOCTYPE html>
             </div>
             <div class="stat-card">
                 <div class="stat-value">{model.n_estimators}</div>
-                <div class="stat-label">Trees in Forest</div>
+                <div class="stat-label">Model Trees</div>
             </div>
         </div>
         
         <!-- Feature Importance -->
         <div class="section">
-            <h2 class="section-title">Top 10 Feature Importance</h2>
+            <h2 class="section-title">
+                Feature Importance
+                <span class="badge badge-neutral">What affects win rate?</span>
+            </h2>
             <div class="features-list">
                 {feature_bars}
             </div>
+            <div class="insight-box">
+                <h4>Key Insight</h4>
+                <p>Duration and rank tier are the strongest predictors. Hero selection features have moderate importance, suggesting team composition matters but individual hero performance varies with skill level.</p>
+            </div>
         </div>
         
-        <!-- Hero Gallery -->
+        <!-- Top Win Rate Heroes -->
         <div class="section">
-            <h2 class="section-title">Hero Gallery</h2>
+            <h2 class="section-title">
+                Highest Win Rate Heroes
+                <span class="badge badge-good">Radiant Pick Advantage</span>
+            </h2>
             <div class="hero-grid">
-                {hero_cards}
+                {top_heroes_html}
+            </div>
+        </div>
+        
+        <!-- Bottom Win Rate Heroes -->
+        <div class="section">
+            <h2 class="section-title">
+                Lowest Win Rate Heroes
+                <span class="badge badge-bad">Requires More Skill</span>
+            </h2>
+            <div class="hero-grid">
+                {bottom_heroes_html}
+            </div>
+            <div class="insight-box">
+                <h4>Note on Low Win Rate Heroes</h4>
+                <p>Heroes like Chen, Io, and Batrider require team coordination and specific strategies. Their low win rate doesn't mean they're weak - they have high skill ceilings and work best in coordinated stacks.</p>
+            </div>
+        </div>
+        
+        <!-- Most Influential Heroes -->
+        <div class="section">
+            <h2 class="section-title">
+                Most Influential Heroes
+                <span class="badge badge-neutral">Model Focus Areas</span>
+            </h2>
+            <div class="hero-grid">
+                {influential_html}
+            </div>
+            <div class="insight-box">
+                <h4>Model Perspective</h4>
+                <p>These heroes have the most impact on the model's predictions. When these heroes appear in a match, they significantly shift the predicted outcome probability.</p>
             </div>
         </div>
         
         <!-- Footer -->
         <div class="footer">
-            <p>Generated by D2-agnet ML Model</p>
+            <p>Data Source: OpenDota API | Model: Random Forest Classifier</p>
         </div>
     </div>
 </body>
@@ -370,4 +504,6 @@ html_content = f"""<!DOCTYPE html>
 with open('visualization/report.html', 'w', encoding='utf-8') as f:
     f.write(html_content)
 
-print("Visualization generated at visualization/report.html")
+print(f"Report generated: visualization/report.html")
+print(f"- {total_matches:,} matches analyzed")
+print(f"- {len(hero_data)} heroes")

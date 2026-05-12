@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dota 2 Match Analysis Report</title>
+    <title>Dota 2 Hero Win Rate Analysis</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -21,7 +21,7 @@
         }
         
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
         
@@ -63,12 +63,11 @@
             padding: 25px;
             text-align: center;
             backdrop-filter: blur(10px);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease;
         }
         
         .stat-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             border-color: rgba(255, 215, 0, 0.3);
         }
         
@@ -116,25 +115,50 @@
             border-radius: 2px;
         }
         
+        .section-title .badge {
+            font-size: 0.8rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-left: auto;
+        }
+        
+        .badge-good {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        .badge-bad {
+            background: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+        
+        .badge-neutral {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
         /* Feature Bars */
         .features-list {
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 12px;
         }
         
         .feature-item {
             background: rgba(0, 0, 0, 0.2);
-            padding: 15px 20px;
-            border-radius: 10px;
+            padding: 12px 18px;
+            border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
         
         .feature-label {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
         }
         
         .feature-name {
@@ -147,34 +171,32 @@
         }
         
         .feature-bar-bg {
-            height: 8px;
+            height: 6px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            border-radius: 3px;
             overflow: hidden;
         }
         
         .feature-bar {
             height: 100%;
             background: linear-gradient(90deg, #ff8c00, #ffd700);
-            border-radius: 4px;
-            transition: width 1s ease;
+            border-radius: 3px;
         }
         
         /* Hero Grid */
         .hero-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
         }
         
         .hero-card {
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             transition: all 0.3s ease;
-            cursor: pointer;
         }
         
         .hero-card:hover {
@@ -184,10 +206,9 @@
         }
         
         .hero-image-wrapper {
-            position: relative;
             width: 80px;
             height: 45px;
-            margin: 0 auto 10px;
+            margin: 0 auto 8px;
         }
         
         .hero-image-wrapper img {
@@ -197,26 +218,51 @@
             filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
         
-        .attr-badge {
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #fff;
-            border: 2px solid #1a1a2e;
+        .hero-info {
+            min-height: 50px;
         }
         
         .hero-name {
-            font-size: 0.85rem;
+            display: block;
+            font-size: 0.8rem;
             color: #ddd;
             font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            font-size: 0.75rem;
+        }
+        
+        .hero-stats .win-rate {
+            font-weight: 600;
+        }
+        
+        .hero-stats .picks {
+            color: #888;
+        }
+        
+        /* Insight Box */
+        .insight-box {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .insight-box h4 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        .insight-box p {
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 0.95rem;
         }
         
         /* Footer */
@@ -233,11 +279,7 @@
                 font-size: 1.8rem;
             }
             .hero-grid {
-                grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-                gap: 12px;
-            }
-            .section {
-                padding: 20px;
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
         }
     </style>
@@ -246,18 +288,18 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>Dota 2 Match Analysis</h1>
-            <p class="subtitle">Machine Learning Win Rate Prediction Report</p>
+            <h1>Dota 2 Hero Win Rate Analysis</h1>
+            <p class="subtitle">Machine Learning Model: Random Forest Classifier</p>
         </div>
         
         <!-- Stats -->
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-value">100</div>
+                <div class="stat-value">10,000</div>
                 <div class="stat-label">Total Matches</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value">45.0%</div>
+                <div class="stat-value">53.4%</div>
                 <div class="stat-label">Radiant Win Rate</div>
             </div>
             <div class="stat-card">
@@ -266,79 +308,32 @@
             </div>
             <div class="stat-card">
                 <div class="stat-value">200</div>
-                <div class="stat-label">Trees in Forest</div>
+                <div class="stat-label">Model Trees</div>
             </div>
         </div>
         
         <!-- Feature Importance -->
         <div class="section">
-            <h2 class="section-title">Top 10 Feature Importance</h2>
+            <h2 class="section-title">
+                Feature Importance
+                <span class="badge badge-neutral">What affects win rate?</span>
+            </h2>
             <div class="features-list">
                 
         <div class="feature-item">
             <div class="feature-label">
-                <span class="feature-name">Lobby Type</span>
-                <span class="feature-value">7.04%</span>
+                <span class="feature-name">Duration</span>
+                <span class="feature-value">0.068</span>
             </div>
             <div class="feature-bar-bg">
-                <div class="feature-bar" style="width: 7.0%"></div>
+                <div class="feature-bar" style="width: 6.8%"></div>
             </div>
         </div>
     
         <div class="feature-item">
             <div class="feature-label">
-                <span class="feature-name">Num Rank Tier</span>
-                <span class="feature-value">6.92%</span>
-            </div>
-            <div class="feature-bar-bg">
-                <div class="feature-bar" style="width: 6.9%"></div>
-            </div>
-        </div>
-    
-        <div class="feature-item">
-            <div class="feature-label">
-                <span class="feature-name">Cluster</span>
-                <span class="feature-value">5.66%</span>
-            </div>
-            <div class="feature-bar-bg">
-                <div class="feature-bar" style="width: 5.7%"></div>
-            </div>
-        </div>
-    
-        <div class="feature-item">
-            <div class="feature-label">
-                <span class="feature-name">Role Pusher Dire</span>
-                <span class="feature-value">5.27%</span>
-            </div>
-            <div class="feature-bar-bg">
-                <div class="feature-bar" style="width: 5.3%"></div>
-            </div>
-        </div>
-    
-        <div class="feature-item">
-            <div class="feature-label">
-                <span class="feature-name">Start Time</span>
-                <span class="feature-value">4.46%</span>
-            </div>
-            <div class="feature-bar-bg">
-                <div class="feature-bar" style="width: 4.5%"></div>
-            </div>
-        </div>
-    
-        <div class="feature-item">
-            <div class="feature-label">
-                <span class="feature-name">Role Initiator Radiant</span>
-                <span class="feature-value">4.34%</span>
-            </div>
-            <div class="feature-bar-bg">
-                <div class="feature-bar" style="width: 4.3%"></div>
-            </div>
-        </div>
-    
-        <div class="feature-item">
-            <div class="feature-label">
-                <span class="feature-name">Role Carry Radiant</span>
-                <span class="feature-value">4.20%</span>
+                <span class="feature-name">Avg Rank Tier</span>
+                <span class="feature-value">0.042</span>
             </div>
             <div class="feature-bar-bg">
                 <div class="feature-bar" style="width: 4.2%"></div>
@@ -347,240 +342,545 @@
     
         <div class="feature-item">
             <div class="feature-label">
-                <span class="feature-name">Role Durable Radiant</span>
-                <span class="feature-value">4.15%</span>
+                <span class="feature-name">Start Time</span>
+                <span class="feature-value">0.038</span>
             </div>
             <div class="feature-bar-bg">
-                <div class="feature-bar" style="width: 4.1%"></div>
+                <div class="feature-bar" style="width: 3.8%"></div>
             </div>
         </div>
     
         <div class="feature-item">
             <div class="feature-label">
-                <span class="feature-name">Role Initiator Dire</span>
-                <span class="feature-value">4.12%</span>
-            </div>
-            <div class="feature-bar-bg">
-                <div class="feature-bar" style="width: 4.1%"></div>
-            </div>
-        </div>
-    
-        <div class="feature-item">
-            <div class="feature-label">
-                <span class="feature-name">Attr All Radiant</span>
-                <span class="feature-value">3.51%</span>
+                <span class="feature-name">Cluster</span>
+                <span class="feature-value">0.035</span>
             </div>
             <div class="feature-bar-bg">
                 <div class="feature-bar" style="width: 3.5%"></div>
             </div>
         </div>
     
+        <div class="feature-item">
+            <div class="feature-label">
+                <span class="feature-name">Num Rank Tier</span>
+                <span class="feature-value">0.026</span>
+            </div>
+            <div class="feature-bar-bg">
+                <div class="feature-bar" style="width: 2.6%"></div>
+            </div>
+        </div>
+    
+        <div class="feature-item">
+            <div class="feature-label">
+                <span class="feature-name">Role Carry Dire</span>
+                <span class="feature-value">0.021</span>
+            </div>
+            <div class="feature-bar-bg">
+                <div class="feature-bar" style="width: 2.1%"></div>
+            </div>
+        </div>
+    
+        <div class="feature-item">
+            <div class="feature-label">
+                <span class="feature-name">Role Escape Radiant</span>
+                <span class="feature-value">0.021</span>
+            </div>
+            <div class="feature-bar-bg">
+                <div class="feature-bar" style="width: 2.1%"></div>
+            </div>
+        </div>
+    
+        <div class="feature-item">
+            <div class="feature-label">
+                <span class="feature-name">Role Initiator Dire</span>
+                <span class="feature-value">0.020</span>
+            </div>
+            <div class="feature-bar-bg">
+                <div class="feature-bar" style="width: 2.0%"></div>
+            </div>
+        </div>
+    
+        <div class="feature-item">
+            <div class="feature-label">
+                <span class="feature-name">Role Escape Dire</span>
+                <span class="feature-value">0.019</span>
+            </div>
+            <div class="feature-bar-bg">
+                <div class="feature-bar" style="width: 1.9%"></div>
+            </div>
+        </div>
+    
+        <div class="feature-item">
+            <div class="feature-label">
+                <span class="feature-name">Role Initiator Radiant</span>
+                <span class="feature-value">0.019</span>
+            </div>
+            <div class="feature-bar-bg">
+                <div class="feature-bar" style="width: 1.9%"></div>
+            </div>
+        </div>
+    
+        <div class="feature-item">
+            <div class="feature-label">
+                <span class="feature-name">Role Nuker Dire</span>
+                <span class="feature-value">0.019</span>
+            </div>
+            <div class="feature-bar-bg">
+                <div class="feature-bar" style="width: 1.9%"></div>
+            </div>
+        </div>
+    
+        <div class="feature-item">
+            <div class="feature-label">
+                <span class="feature-name">Role Carry Radiant</span>
+                <span class="feature-value">0.019</span>
+            </div>
+            <div class="feature-bar-bg">
+                <div class="feature-bar" style="width: 1.9%"></div>
+            </div>
+        </div>
+    
+            </div>
+            <div class="insight-box">
+                <h4>Key Insight</h4>
+                <p>Duration and rank tier are the strongest predictors. Hero selection features have moderate importance, suggesting team composition matters but individual hero performance varies with skill level.</p>
             </div>
         </div>
         
-        <!-- Hero Gallery -->
+        <!-- Top Win Rate Heroes -->
         <div class="section">
-            <h2 class="section-title">Hero Gallery</h2>
+            <h2 class="section-title">
+                Highest Win Rate Heroes
+                <span class="badge badge-good">Radiant Pick Advantage</span>
+            </h2>
             <div class="hero-grid">
                 
         <div class="hero-card">
             <div class="hero-image-wrapper">
-                <img src="hero_images/1_antimage.png" alt="Anti-Mage" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/antimage_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
+                <img src="hero_images/55_dark_seer.png" alt="Dark Seer" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/dark_seer_lg.png'" />
             </div>
-            <span class="hero-name">Anti-Mage</span>
+            <div class="hero-info">
+                <span class="hero-name">Dark Seer</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">68.9%</span>
+                    <span class="stat picks">135 picks</span>
+                </div>
+            </div>
         </div>
     
         <div class="hero-card">
             <div class="hero-image-wrapper">
-                <img src="hero_images/2_axe.png" alt="Axe" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/axe_lg.png'" />
-                <span class="attr-badge" style="background: #F44336">S</span>
+                <img src="hero_images/67_spectre.png" alt="Spectre" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/spectre_lg.png'" />
             </div>
-            <span class="hero-name">Axe</span>
+            <div class="hero-info">
+                <span class="hero-name">Spectre</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">65.2%</span>
+                    <span class="stat picks">474 picks</span>
+                </div>
+            </div>
         </div>
     
         <div class="hero-card">
             <div class="hero-image-wrapper">
-                <img src="hero_images/3_bane.png" alt="Bane" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/bane_lg.png'" />
-                <span class="attr-badge" style="background: #9C27B0">?</span>
+                <img src="hero_images/90_keeper_of_the_light.png" alt="Keeper of the Light" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/keeper_of_the_light_lg.png'" />
             </div>
-            <span class="hero-name">Bane</span>
+            <div class="hero-info">
+                <span class="hero-name">Keeper of the Light</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">64.0%</span>
+                    <span class="stat picks">189 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/42_skeleton_king.png" alt="Wraith King" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/skeleton_king_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Wraith King</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">61.1%</span>
+                    <span class="stat picks">612 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/31_lich.png" alt="Lich" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/lich_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Lich</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">60.3%</span>
+                    <span class="stat picks">448 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/77_lycan.png" alt="Lycan" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/lycan_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Lycan</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">60.2%</span>
+                    <span class="stat picks">88 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/60_night_stalker.png" alt="Night Stalker" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/night_stalker_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Night Stalker</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">59.9%</span>
+                    <span class="stat picks">242 picks</span>
+                </div>
+            </div>
         </div>
     
         <div class="hero-card">
             <div class="hero-image-wrapper">
                 <img src="hero_images/4_bloodseeker.png" alt="Bloodseeker" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/bloodseeker_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
             </div>
-            <span class="hero-name">Bloodseeker</span>
+            <div class="hero-info">
+                <span class="hero-name">Bloodseeker</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">59.9%</span>
+                    <span class="stat picks">202 picks</span>
+                </div>
+            </div>
         </div>
     
         <div class="hero-card">
             <div class="hero-image-wrapper">
-                <img src="hero_images/5_crystal_maiden.png" alt="Crystal Maiden" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/crystal_maiden_lg.png'" />
-                <span class="attr-badge" style="background: #2196F3">I</span>
+                <img src="hero_images/109_terrorblade.png" alt="Terrorblade" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/terrorblade_lg.png'" />
             </div>
-            <span class="hero-name">Crystal Maiden</span>
+            <div class="hero-info">
+                <span class="hero-name">Terrorblade</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">58.6%</span>
+                    <span class="stat picks">162 picks</span>
+                </div>
+            </div>
         </div>
     
         <div class="hero-card">
             <div class="hero-image-wrapper">
-                <img src="hero_images/6_drow_ranger.png" alt="Drow Ranger" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/drow_ranger_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
+                <img src="hero_images/85_undying.png" alt="Undying" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/undying_lg.png'" />
             </div>
-            <span class="hero-name">Drow Ranger</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/7_earthshaker.png" alt="Earthshaker" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/earthshaker_lg.png'" />
-                <span class="attr-badge" style="background: #F44336">S</span>
+            <div class="hero-info">
+                <span class="hero-name">Undying</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">58.6%</span>
+                    <span class="stat picks">471 picks</span>
+                </div>
             </div>
-            <span class="hero-name">Earthshaker</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/8_juggernaut.png" alt="Juggernaut" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/juggernaut_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
-            </div>
-            <span class="hero-name">Juggernaut</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/9_mirana.png" alt="Mirana" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/mirana_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
-            </div>
-            <span class="hero-name">Mirana</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/10_morphling.png" alt="Morphling" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/morphling_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
-            </div>
-            <span class="hero-name">Morphling</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/11_nevermore.png" alt="Shadow Fiend" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/nevermore_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
-            </div>
-            <span class="hero-name">Shadow Fiend</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/12_phantom_lancer.png" alt="Phantom Lancer" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/phantom_lancer_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
-            </div>
-            <span class="hero-name">Phantom Lancer</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/13_puck.png" alt="Puck" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/puck_lg.png'" />
-                <span class="attr-badge" style="background: #2196F3">I</span>
-            </div>
-            <span class="hero-name">Puck</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/14_pudge.png" alt="Pudge" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/pudge_lg.png'" />
-                <span class="attr-badge" style="background: #F44336">S</span>
-            </div>
-            <span class="hero-name">Pudge</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/15_razor.png" alt="Razor" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/razor_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
-            </div>
-            <span class="hero-name">Razor</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/16_sand_king.png" alt="Sand King" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/sand_king_lg.png'" />
-                <span class="attr-badge" style="background: #9C27B0">?</span>
-            </div>
-            <span class="hero-name">Sand King</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/17_storm_spirit.png" alt="Storm Spirit" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/storm_spirit_lg.png'" />
-                <span class="attr-badge" style="background: #2196F3">I</span>
-            </div>
-            <span class="hero-name">Storm Spirit</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/18_sven.png" alt="Sven" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/sven_lg.png'" />
-                <span class="attr-badge" style="background: #F44336">S</span>
-            </div>
-            <span class="hero-name">Sven</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/19_tiny.png" alt="Tiny" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/tiny_lg.png'" />
-                <span class="attr-badge" style="background: #F44336">S</span>
-            </div>
-            <span class="hero-name">Tiny</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/20_vengefulspirit.png" alt="Vengeful Spirit" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/vengefulspirit_lg.png'" />
-                <span class="attr-badge" style="background: #4CAF50">A</span>
-            </div>
-            <span class="hero-name">Vengeful Spirit</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/21_windrunner.png" alt="Windranger" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/windrunner_lg.png'" />
-                <span class="attr-badge" style="background: #9C27B0">?</span>
-            </div>
-            <span class="hero-name">Windranger</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/22_zuus.png" alt="Zeus" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/zuus_lg.png'" />
-                <span class="attr-badge" style="background: #2196F3">I</span>
-            </div>
-            <span class="hero-name">Zeus</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/23_kunkka.png" alt="Kunkka" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/kunkka_lg.png'" />
-                <span class="attr-badge" style="background: #F44336">S</span>
-            </div>
-            <span class="hero-name">Kunkka</span>
-        </div>
-    
-        <div class="hero-card">
-            <div class="hero-image-wrapper">
-                <img src="hero_images/25_lina.png" alt="Lina" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/lina_lg.png'" />
-                <span class="attr-badge" style="background: #2196F3">I</span>
-            </div>
-            <span class="hero-name">Lina</span>
         </div>
     
             </div>
         </div>
         
+        <!-- Bottom Win Rate Heroes -->
+        <div class="section">
+            <h2 class="section-title">
+                Lowest Win Rate Heroes
+                <span class="badge badge-bad">Requires More Skill</span>
+            </h2>
+            <div class="hero-grid">
+                
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/66_chen.png" alt="Chen" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/chen_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Chen</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">35.3%</span>
+                    <span class="stat picks">34 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/91_wisp.png" alt="Io" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/wisp_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Io</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">41.8%</span>
+                    <span class="stat picks">153 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/65_batrider.png" alt="Batrider" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/batrider_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Batrider</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">42.5%</span>
+                    <span class="stat picks">87 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/57_omniknight.png" alt="Omniknight" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/omniknight_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Omniknight</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">42.9%</span>
+                    <span class="stat picks">140 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/78_brewmaster.png" alt="Brewmaster" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/brewmaster_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Brewmaster</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">42.9%</span>
+                    <span class="stat picks">70 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/79_shadow_demon.png" alt="Shadow Demon" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/shadow_demon_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Shadow Demon</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">43.2%</span>
+                    <span class="stat picks">118 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/103_elder_titan.png" alt="Elder Titan" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/elder_titan_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Elder Titan</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">43.3%</span>
+                    <span class="stat picks">60 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/38_beastmaster.png" alt="Beastmaster" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/beastmaster_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Beastmaster</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">43.6%</span>
+                    <span class="stat picks">188 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/49_dragon_knight.png" alt="Dragon Knight" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/dragon_knight_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Dragon Knight</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">45.1%</span>
+                    <span class="stat picks">215 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/64_jakiro.png" alt="Jakiro" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/jakiro_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Jakiro</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">45.1%</span>
+                    <span class="stat picks">412 picks</span>
+                </div>
+            </div>
+        </div>
+    
+            </div>
+            <div class="insight-box">
+                <h4>Note on Low Win Rate Heroes</h4>
+                <p>Heroes like Chen, Io, and Batrider require team coordination and specific strategies. Their low win rate doesn't mean they're weak - they have high skill ceilings and work best in coordinated stacks.</p>
+            </div>
+        </div>
+        
+        <!-- Most Influential Heroes -->
+        <div class="section">
+            <h2 class="section-title">
+                Most Influential Heroes
+                <span class="badge badge-neutral">Model Focus Areas</span>
+            </h2>
+            <div class="hero-grid">
+                
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/67_spectre.png" alt="Spectre" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/spectre_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Spectre</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">65.2%</span>
+                    <span class="stat picks">474 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/35_sniper.png" alt="Sniper" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/sniper_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Sniper</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">57.4%</span>
+                    <span class="stat picks">1291 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/26_lion.png" alt="Lion" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/lion_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Lion</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">52.3%</span>
+                    <span class="stat picks">1457 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/42_skeleton_king.png" alt="Wraith King" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/skeleton_king_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Wraith King</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">61.1%</span>
+                    <span class="stat picks">612 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/14_pudge.png" alt="Pudge" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/pudge_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Pudge</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">54.8%</span>
+                    <span class="stat picks">1528 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/64_jakiro.png" alt="Jakiro" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/jakiro_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Jakiro</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #F44336">45.1%</span>
+                    <span class="stat picks">412 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/84_ogre_magi.png" alt="Ogre Magi" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/ogre_magi_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Ogre Magi</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">56.2%</span>
+                    <span class="stat picks">1120 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/44_phantom_assassin.png" alt="Phantom Assassin" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/phantom_assassin_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Phantom Assassin</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">50.2%</span>
+                    <span class="stat picks">863 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/74_invoker.png" alt="Invoker" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/invoker_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Invoker</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">55.5%</span>
+                    <span class="stat picks">988 picks</span>
+                </div>
+            </div>
+        </div>
+    
+        <div class="hero-card">
+            <div class="hero-image-wrapper">
+                <img src="hero_images/27_shadow_shaman.png" alt="Shadow Shaman" onerror="this.src='https://cdn.cloudflare.steamstatic.com/apps/dota2/images/heroes/shadow_shaman_lg.png'" />
+            </div>
+            <div class="hero-info">
+                <span class="hero-name">Shadow Shaman</span>
+                <div class="hero-stats">
+                    <span class="stat win-rate" style="color: #4CAF50">56.2%</span>
+                    <span class="stat picks">735 picks</span>
+                </div>
+            </div>
+        </div>
+    
+            </div>
+            <div class="insight-box">
+                <h4>Model Perspective</h4>
+                <p>These heroes have the most impact on the model's predictions. When these heroes appear in a match, they significantly shift the predicted outcome probability.</p>
+            </div>
+        </div>
+        
         <!-- Footer -->
         <div class="footer">
-            <p>Generated by D2-agnet ML Model</p>
+            <p>Data Source: OpenDota API | Model: Random Forest Classifier</p>
         </div>
     </div>
 </body>
